@@ -1,0 +1,157 @@
+/*************************************************
+ * CONFIGURACIÓN
+ *************************************************/
+
+// Carpeta donde se guardan las fotos subidas
+const ID_SUBIDAS = "16ZCusufWhuIDYXfzoLcO1-k8H2-nVhxu";
+
+// Carpeta desde donde se muestran las fotos
+const ID_GALERIA = "1hPcAcAaW9eXJH4AOyvMt-SqP1A6jqOGU";
+
+// Carpeta donde está la foto de perfil/logo
+const ID_PERFIL = "1o3PtaE27NzLSzRuknkioPFA-YvZCqKgW";
+
+
+/*************************************************
+ * WEB APP
+ *************************************************/
+
+function doGet() {
+
+  return HtmlService
+    .createHtmlOutputFromFile("Index")
+    .setTitle("EVENTO CHEC")
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(
+      HtmlService.XFrameOptionsMode.ALLOWALL
+    );
+
+}
+
+
+/*************************************************
+ * SUBIR FOTO
+ *************************************************/
+
+function subirFoto(base64, nombreArchivo) {
+
+  try {
+
+    const datos = base64.split(",");
+
+    const mime =
+      datos[0].match(/data:(.*);base64/)[1];
+
+    const bytes =
+      Utilities.base64Decode(datos[1]);
+
+    const blob =
+      Utilities.newBlob(
+        bytes,
+        mime,
+        nombreArchivo
+      );
+
+    const carpeta =
+      DriveApp.getFolderById(ID_SUBIDAS);
+
+    carpeta.createFile(blob);
+
+    return {
+      ok: true,
+      mensaje: "Foto subida correctamente."
+    };
+
+  } catch (e) {
+
+    return {
+      ok: false,
+      mensaje: e.toString()
+    };
+
+  }
+
+}
+
+
+/*************************************************
+ * OBTENER GALERÍA
+ *************************************************/
+
+function obtenerGaleria() {
+
+  const carpeta = DriveApp.getFolderById(ID_GALERIA);
+
+  const archivos = carpeta.getFiles();
+
+  const lista = [];
+
+  while (archivos.hasNext()) {
+
+    const archivo = archivos.next();
+
+    if (archivo.getMimeType().indexOf("image") !== -1) {
+
+      lista.push({
+        nombre: archivo.getName(),
+        url: "https://drive.google.com/thumbnail?id=" + archivo.getId() + "&sz=w1000"
+      });
+
+    }
+
+  }
+
+  return lista;
+
+}
+
+
+/*************************************************
+ * FOTO DE PERFIL
+ *************************************************/
+
+function obtenerFotoPerfil() {
+
+  try {
+
+    const carpeta =
+      DriveApp.getFolderById(ID_PERFIL);
+
+    const archivos =
+      carpeta.getFiles();
+
+    while (archivos.hasNext()) {
+
+      const archivo = archivos.next();
+
+      if (
+        archivo.getMimeType().indexOf("image") !== -1
+      ) {
+
+        return {
+          ok: true,
+          url:
+            "https://drive.google.com/thumbnail?id=" +
+            archivo.getId() +
+            "&sz=w1000"
+        };
+
+      }
+
+    }
+
+    return {
+      ok: false,
+      mensaje: "No se encontró imagen de perfil."
+    };
+
+  } catch (e) {
+
+    return {
+      ok: false,
+      mensaje: e.toString()
+    };
+
+  }
+
+}
